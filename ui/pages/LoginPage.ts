@@ -1,7 +1,7 @@
 import { Page, expect } from '@playwright/test';
 
 export class LoginPage {
-  constructor(private page: Page) {}
+  constructor(public page: Page) {}
 
   async goto() {
     await this.page.goto('/login');
@@ -17,6 +17,14 @@ export class LoginPage {
 
   get submitButton() {
     return this.page.locator('[data-testid="login-submit"]');
+  }
+
+  get vkButton() {
+    return this.page.getByText(/Войти через ВК/i);
+  }
+
+  get registerLink() {
+    return this.page.getByText(/Нет аккаунта|Зарегистрироваться/i);
   }
 
   async fillForm(email: string, password: string) {
