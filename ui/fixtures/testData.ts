@@ -10,6 +10,7 @@ export const testData = {
   },
 
   invalidEmails: {
+    empty:'',
     noAt: 'userexample.com',
     noDomain: 'user@',
     noLocalPart: '@example.com',
@@ -26,9 +27,9 @@ export const testData = {
   },
 
   validPasswords: {
-    min8: 'Pass1234',
-    basic: 'Password123',
-    long: 'Password1234567890',
+    min8: 'Pass-123',
+    basic: 'Password-123',
+    long: 'Password-1234567890',
     withSpecial: 'P@ssw0rd!#$',
   },
 

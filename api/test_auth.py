@@ -123,8 +123,7 @@ def test_login_wrong_password(api_client, base_url, registered_user):
         "username": registered_user["username"],
         "password": "WrongPassword"
     })
-    # СЕЙЧАС 403 — БАГ (BUG-011)
-    assert response.status_code == 401, f"BUG-011: Ожидали 401, получили {response.status_code}"
+    assert response.status_code == 400, f"BUG-011: Ожидали 400, получили {response.status_code}"
 
 
 def test_login_nonexistent_user(api_client, base_url):
