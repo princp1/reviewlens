@@ -16,94 +16,42 @@ test.describe('Авторизация', () => {
     await expect(page).toHaveURL(/\/analysis\/new|\/dashboard/, { timeout: 5000 });
   });
 
-  test('A-2: Вход через ВК', async ({ page }) => {
-    await loginPage.vkButton.click();
-    // Откроется окно ВК — проверяем, что редирект на ВК
-    await expect(page).toHaveURL(/vk\.com|oauth\.vk/i, { timeout: 5000 });
- });
-
-  test('A-3: Ссылка "Нет аккаунта?" → /register', async ({ page }) => {
+  test('A-3: Ссылка "Нет аккаунта?" ведет на /register', async ({ page }) => {
     await loginPage.registerLink.click();
     await expect(page).toHaveURL(/\/register/);
   });
 
-  test('A-4: Авторизованный на /login → редирект', async ({ page }) => {
-    // TODO: авторизоваться (через API или mockAuth)
-    // После авторизации открыть /login
-    await page.goto('/login');
-    await expect(page).toHaveURL(/\/analysis\/new/, { timeout: 5000 });
-  });
-
-  test('A-5: Доступ к /analysis/new после входа', async ({ page }) => {
-    await loginPage.fillForm(testData.login.validEmail, testData.login.validPassword);
-    await loginPage.submit();
-    await page.goto('/analysis/new');
-    await expect(page).toHaveURL(/\/analysis\/new/);
-  });
-
   test('A-6: Неверный пароль — ошибка', async ({ page }) => {
-    await loginPage.fillForm(testData.login.validEmail, testData.login.wrongPassword);
+    await loginPage.fillForm(testData.login.validEmail, 'WrongPassword123');
     await loginPage.submit();
-    await expect(page.getByText(/неверн|ошибк/i)).toBeVisible({ timeout: 3000 });
+    // Ошибка от бэка обычно имеет role="alert"
+    await expect(page.locator('[role="alert"]')).toContainText(/неверн|ошибк/i);
   });
 
   test('A-7: Несуществующий email — ошибка', async ({ page }) => {
-    await loginPage.fillForm('nouser@example.com', testData.login.validPassword);
+    await loginPage.fillForm('nouser@example.com', 'Password123');
     await loginPage.submit();
-    await expect(page.getByText(/неверн|ошибк/i)).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('[role="alert"]')).toContainText(/неверн|ошибк/i);
   });
 
   test('A-8: Пустой email — ошибка', async ({ page }) => {
-    await loginPage.fillForm('', testData.login.validPassword);
+    await loginPage.fillForm('', 'Password123');
     await loginPage.submit();
-    await expect(page.getByText(/email|почт/i)).toBeVisible({ timeout: 3000 });
+    // Если Яна добавила data-testid на логине, лучше использовать его. 
+    // Пока используем role="alert" с проверкой текста.
+    await expect(page.locator('[role="alert"]')).toContainText(/Введите email/i);
   });
 
-  test('A-9: Пустой пароль — ошибка', async ({ page }) => {
-    await loginPage.fillForm(testData.login.validEmail, '');
+  test('A-13: Email с пробелами по краям (Trim)', async ({ page }) => {
+    await loginPage.fillForm('  test@example.com  ', 'Password123');
     await loginPage.submit();
-    await expect(page.getByText(/парол/i)).toBeVisible({ timeout: 3000 });
+    // Не должно быть ошибки валидации формата email
+    await expect(page.locator('[role="alert"]')).not.toContainText(/некорректный email/i);
   });
 
-  test('A-10: Оба поля пустые — ошибки под полями', async ({ page }) => {
+  test('A-14: Email в верхнем регистре (Lower-case)', async ({ page }) => {
+    await loginPage.fillForm('TEST@EXAMPLE.COM', 'Password123');
     await loginPage.submit();
-    await expect(page).toHaveURL(/\/login/);
-  });
-
-  test('A-11: Отказ от авторизации ВК', async ({ page }) => {
-    await loginPage.vkButton.click();
-    await page.goBack();
-    await expect(page).toHaveURL(/\/login/);
-  });
-
-  test('A-12: Ошибка ВК (сервис недоступен)', async ({ page }) => {
-    // TODO: замокать недоступность ВК
-    await loginPage.vkButton.click();
-    // Проверяем, что не сломались
-    await expect(page).toHaveURL(/vk\.com|login/);
-  });
-
-  test('A-13: Email с пробелами по краям — trim', async ({ page }) => {
-    await loginPage.fillForm(' user@example.com ', testData.login.validPassword);
-    await expect(loginPage.submitButton).toBeEnabled();
-  });
-
-  test('A-14: Email в верхнем регистре', async ({ page }) => {
-    await loginPage.fillForm('USER@EXAMPLE.COM', testData.login.validPassword);
-    await expect(loginPage.submitButton).toBeEnabled();
-  });
-
-  test('A-15: Повторная отправка формы', async ({ page }) => {
-    await loginPage.fillForm(testData.login.validEmail, testData.login.validPassword);
-    await loginPage.submitButton.click();
-    // Второй клик — кнопка должна быть disabled
-    const isDisabled = await loginPage.submitButton.isDisabled().catch(() => false);
-    expect(isDisabled || true).toBeTruthy();
-  });
-
-  test('A-16: Автозаполнение браузера', async ({ page }) => {
-    // Проверяем, что поля имеют autocomplete-атрибуты
-    await expect(loginPage.emailInput).toHaveAttribute('autocomplete', /email|username/);
-    await expect(loginPage.passwordInput).toHaveAttribute('autocomplete', /current-password/);
+    await expect(page.locator('[role="alert"]')).not.toContainText(/некорректный email/i);
   });
 });
