@@ -5,10 +5,14 @@ import uuid
 # ============================================
 
 def test_register_success(api_client, base_url, unique_user):
-    """R-1: Успешная регистрация"""
+    """R-1: Успешная регистрация (возвращает токены)"""
     response = api_client.post(f"{base_url}/auth/register", json=unique_user)
     assert response.status_code == 200, f"Ожидали 200, получили {response.status_code}"
-    assert "registered successfully" in response.text.lower()
+    
+    data = response.json()
+    # Проверяем, что бэк сразу выдал токены
+    assert "accessToken" in data, "В ответе нет accessToken"
+    assert "refreshToken" in data, "В ответе нет refreshToken"
 
 
 def test_register_duplicate_username(api_client, base_url, registered_user):

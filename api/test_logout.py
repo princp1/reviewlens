@@ -65,5 +65,5 @@ def test_logout_without_body(api_client, base_url):
     """Выход вообще без тела запроса (не передан JSON)"""
     response = api_client.post(f"{base_url}/auth/logout")
     
-    # Spring Boot должен вернуть 400 (Bad Request) из-за отсутствия тела
-    assert response.status_code == 400, f"Ожидали 400, получили {response.status_code}"
+    # Spring Security может вернуть 401, если токена нет, или 400, если дошел до контроллера
+    assert response.status_code in [400, 401], f"Ожидали 400/401, получили {response.status_code}"
