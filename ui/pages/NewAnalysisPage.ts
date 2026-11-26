@@ -9,7 +9,7 @@ export class NewAnalysisPage {
 
   // Локаторы (используем data-testid, которые должна добавить Яна)
   get urlInput() {
-    return this.page.locator('[data-testid="analysis-url-input"]');
+    return this.page.locator('[data-testid="analysis-url"]');
   }
 
   get submitButton() {
@@ -28,11 +28,11 @@ export class NewAnalysisPage {
     await this.submitButton.click();
   }
 
-  // Метод для мока авторизации (чтобы пройти защиту роута)
-  async mockLogin() {
-    await this.page.goto('/');
-    await this.page.evaluate(() => {
-      localStorage.setItem('accessToken', 'fake-jwt-token-for-tests');
-    });
-  }
+  async loginByAccount(username: string, password: string) {
+    await this.page.goto('/login');
+    await this.page.fill('input[type="email"], input[name="email"]', username);
+    await this.page.fill('input[type="password"], input[name="password"]', password);
+    await this.page.click('button[type="submit"]');
+    // Ждём, пока сам фронтенд после успешного логина переведёт на /analysis/new
+    await this.page.waitForURL(/\/analysis\/new/, { timeout: 7000 });}
 }

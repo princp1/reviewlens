@@ -2,7 +2,7 @@ import pytest
 import requests
 import uuid
 
-BASE_URL = "http://localhost:80/api/v1"
+BASE_URL = "http://87.242.102.114/api/v1"
 
 @pytest.fixture
 def api_client():
@@ -20,6 +20,14 @@ def unique_user():
     return {
         "username": f"test_{uid}@example.com",
         "password": "Password123"
+    }
+
+@pytest.fixture
+def empty_user():
+    """Пустые поля для теста."""
+    return {
+        "username": "",
+        "password": ""
     }
 
 @pytest.fixture

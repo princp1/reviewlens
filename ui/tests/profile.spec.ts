@@ -16,9 +16,8 @@ test.describe('Личный кабинет (US-13)', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test('P-2: Отображение данных в ЛК (с мок-токеном)', async ({ page }) => {
-    // Подкладываем токен, чтобы фронт думал, что мы авторизованы
-    await profilePage.mockLogin();
+  test('P-2: Отображение данных в ЛК', async ({ page }) => {
+    await profilePage.loginViaApi('name12@mail.ru', '1234567q');
     await profilePage.goto();
     
     // Проверяем, что мы остались на странице профиля
@@ -29,11 +28,9 @@ test.describe('Личный кабинет (US-13)', () => {
   });
 
   test('P-3: Кнопка "Перейти к истории" присутствует', async ({ page }) => {
-    await profilePage.mockLogin();
+    await profilePage.loginViaApi('name12@mail.ru', '1234567q');
     await profilePage.goto();
     
-    // Проверяем наличие кнопки на странице
-    const historyBtn = page.getByText(/Перейти к истории/i);
-    await expect(historyBtn).toBeVisible();
+    await expect(page.locator('[data-testid="profile-primary-action"]')).toBeVisible();
   });
 });

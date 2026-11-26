@@ -8,7 +8,7 @@ export default defineConfig({
   reporter: 'html',
 
   use: {
-    baseURL: 'http://localhost:5173',  // ← уточнить у Яны хост
+    baseURL: 'https://reviewlens.duckdns.org',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

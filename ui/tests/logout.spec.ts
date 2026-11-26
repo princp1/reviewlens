@@ -7,7 +7,7 @@ test.describe('Выход из системы (US-2)', () => {
   test.beforeEach(async ({ page }) => {
     profilePage = new ProfilePage(page);
     // Авторизуемся перед каждым тестом
-    await profilePage.mockLogin();
+    await profilePage.loginViaApi('name12@mail.ru', '1234567q');
   });
 
   test('L-1: Успешный выход из аккаунта', async ({ page }) => {
@@ -17,14 +17,14 @@ test.describe('Выход из системы (US-2)', () => {
     await profilePage.logout();
 
     // 1. Проверяем, что произошел редирект на главную
-    await expect(page).toHaveURL(/^\/(login)?$/);
+    await expect(page).toHaveURL('/');
     
     // 2. Проверяем, что токены удалены из localStorage
     const token = await page.evaluate(() => localStorage.getItem('accessToken'));
     expect(token).toBeNull();
   });
 
-  test('L-2: Доступ к защищенной странице после выхода', async ({ page }) => {
+  test('L-6: Доступ к защищенной странице после выхода', async ({ page }) => {
     await profilePage.goto();
     await profilePage.logout();
 
@@ -32,6 +32,15 @@ test.describe('Выход из системы (US-2)', () => {
     await page.goto('/profile');
     
     // Должно выкинуть на логин
+    await expect(page).toHaveURL(/\/login/);
+
+    await page.goto('/history');
+    await expect(page).toHaveURL(/\/login/);
+
+    await page.goto('/analysis/new');
+    await expect(page).toHaveURL(/\/login/);
+
+    await page.goto('/analysis/new');
     await expect(page).toHaveURL(/\/login/);
   });
 });
