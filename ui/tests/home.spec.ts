@@ -12,7 +12,7 @@ test.describe('Главная страница', () => {
     const home = new HomePage(page);
     await home.goto();
     await home.startButton.click();
-    await expect(page).not.toHaveURL('/');
+    await expect(page).toHaveURL(/\/(register|login|analysis\/new)/);
   });
 
   test('Кнопка "Войти" ведёт на /login', async ({ page }) => {

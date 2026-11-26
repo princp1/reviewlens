@@ -2,6 +2,12 @@ import { test, expect } from '@playwright/test';
 import { RegisterPage } from '../pages/RegisterPage';
 import { testData } from '../fixtures/testData';
 
+const API_URL = process.env.API_URL || 'http://87.242.102.114/api/v1';
+
+function uniqueEmail(prefix: string) {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}@example.com`;
+}
+
 test.describe('Регистрация — позитивные, негативные и граничные проверки', () => {
   let registerPage: RegisterPage;
 
@@ -15,9 +21,8 @@ test.describe('Регистрация — позитивные, негативн
   // ==========================================
 
   test('R-1: Успешная регистрация с уникальным email', async ({ page }) => {
-    const uniqueEmail = `qa_reg_${Date.now()}@example.com`;
     await registerPage.fillForm(
-      uniqueEmail,
+      uniqueEmail('qa_reg'),
       testData.validPasswords.basic,
       testData.validPasswords.basic
     );
@@ -32,10 +37,18 @@ test.describe('Регистрация — позитивные, негативн
     await expect(vkButton).toBeEnabled();
   });
 
-  test('R-4: Почта занята → ошибка после сабмишена', async ({ page }) => {
-    await registerPage.fillForm("mail@mail.com", testData.validPasswords.basic, '');
+  test('R-4: Почта занята → ошибка после сабмишена', async ({ page, request }) => {
+    const existingEmail = uniqueEmail('qa_dup');
+    await request.post(`${API_URL}/auth/register`, {
+      data: { username: existingEmail, password: testData.validPasswords.basic },
+    });
+    await registerPage.fillForm(
+      existingEmail,
+      testData.validPasswords.basic,
+      testData.validPasswords.basic
+    );
     await registerPage.submit();
-    await expect(page.locator('[data-testid="register-confirm-password-error"]')).toBeVisible();
+    await expect(page.locator('[role="alert"]')).toContainText(/занят|существует|ошибк/i);
   });
 
   test('R-5, 6, 7, 8: Пустые поля → "Введите email, пароль"', async ({ page }) => {
@@ -66,7 +79,7 @@ test.describe('Регистрация — позитивные, негативн
     await expect(registerPage.submitButton).toBeEnabled();
   });
     test('R-17: Email в верхнем регистре принимается и нормализуется', async ({ page }) => {
-    const upperEmail = `QA_UPPER_${Date.now()}@EXAMPLE.COM`;
+    const upperEmail = uniqueEmail('qa_upper').toUpperCase();
     await registerPage.fillForm(upperEmail, testData.validPasswords.basic, testData.validPasswords.basic);
     await registerPage.submit();
     await expect(page).toHaveURL(/\/analysis\/new/, { timeout: 7000 });
@@ -82,12 +95,14 @@ test.describe('Регистрация — позитивные, негативн
   });
 
     test('R-22: Авторизованный пользователь при открытии /register перенаправляется на /analysis/new', async ({ page }) => {
-    const uniqueEmail = `qa_auth_redir_${Date.now()}@example.com`;
-    await registerPage.fillForm(uniqueEmail, testData.validPasswords.basic, testData.validPasswords.basic);
+    await registerPage.fillForm(
+      uniqueEmail('qa_auth_redir'),
+      testData.validPasswords.basic,
+      testData.validPasswords.basic
+    );
     await registerPage.submit();
     await expect(page).toHaveURL(/\/analysis\/new/, { timeout: 7000 });
 
-    // Пробуем снова открыть /register будучи авторизованным
     await registerPage.goto();
     await expect(page).toHaveURL(/\/analysis\/new/);
   });
@@ -206,14 +221,14 @@ test.describe('Регистрация — позитивные, негативн
     await expect(page.locator('[data-testid="register-email-error-email_too_long"]')).toHaveText(/слишком длинный/i);
   });
 
-  test('R-E13: Email только из пробелов → "Введите еmail"', async ({ page }) => {
+  test('R-E13: Email только из пробелов → "Введите email"', async ({ page }) => {
     await registerPage.fillForm(
       testData.invalidEmails.onlySpaces,
       testData.validPasswords.basic,
       testData.validPasswords.basic
     );
     await registerPage.submit();
-    await expect(page.locator('[data-testid="register-email-error-email_too_long"]')).toHaveText(/Введите email/i);
+    await expect(page.locator('[data-testid="register-email-error-email_required"]')).toHaveText(/Введите email/i);
   });
 
   test('R-E14: Кириллица в email → ошибка формата', async ({ page }) => {

@@ -1,14 +1,19 @@
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
-  retries: 0,
-  workers: undefined,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
 
   use: {
-    baseURL: 'https://reviewlens.duckdns.org',
+    baseURL: process.env.BASE_URL || 'https://reviewlens.duckdns.org',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
