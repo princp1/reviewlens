@@ -1,13 +1,31 @@
 import { test, expect, Page } from '@playwright/test';
 import { HeaderPage } from '../pages/HeaderPage';
 
-const TEST_EMAIL = 'name12@mail.ru';
-const TEST_PASSWORD = '1234567q';
+const API_URL = process.env.API_URL || 'http://87.242.102.114/api/v1';
+const TEST_EMAIL = process.env.TEST_EMAIL;
+const TEST_PASSWORD = process.env.TEST_PASSWORD;
+
+if (!TEST_EMAIL || !TEST_PASSWORD) {
+  throw new Error('Не заданы переменные окружения TEST_EMAIL и TEST_PASSWORD');
+}
 
 async function loginByAccount(page: Page, username: string, password: string) {
-  const response = await page.request.post('http://87.242.102.114/api/v1/auth/login', {
+  // 1. Пытаемся войти
+  let response = await page.request.post(`${API_URL}/auth/login`, {
     data: { username, password },
   });
+
+  // 2. Если окружение чистое и аккаунт ещё не создан — регистрируем автоматически
+  if (response.status() === 401 || response.status() === 404) {
+    response = await page.request.post(`${API_URL}/auth/register`, {
+      data: { username, password },
+    });
+  }
+
+  if (!response.ok()) {
+    throw new Error(`Ошибка авторизации в ${API_URL}: ${response.status()} ${await response.text()}`);
+  }
+
   const { accessToken, refreshToken } = await response.json();
 
   await page.goto('/');

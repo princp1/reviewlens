@@ -14,25 +14,19 @@ test.describe('История анализов (US-12)', () => {
   });
 
   test('H-2: Доступ с авторизацией', async ({ page }) => {
-    await historyPage.loginByAccount('name12@mail.ru', '1234567q');
+    await historyPage.loginByAccount();
     await historyPage.goto();
-    
+
     await expect(page).toHaveURL(/\/history/);
   });
 
   test('H-3: Пустое состояние (нет анализов)', async ({ page }) => {
-    await historyPage.loginByAccount('name12@mail.ru', '1234567q');
+    // Создаём чистого пользователя специально для этого теста,
+    // чтобы история гарантированно была пустой при повторных прогонах
+    const freshEmail = `qa_empty_hist_${Date.now()}_${Math.random().toString(36).slice(2, 6)}@example.com`;
+    await historyPage.loginByAccount(freshEmail, 'Password123');
     await historyPage.goto();
-    
-    // Если у пользователя нет анализов, должен быть текст пустого состояния
+
     await expect(historyPage.emptyStateMessage).toBeVisible({ timeout: 5000 });
   });
-
-  /*test('H-4: Отображение списка анализов', async ({ page }) => {
-    await historyPage.loginByAccount('name12@mail.ru', '1234567q');
-    await historyPage.goto();
-    
-    // Проверяем, что карточки анализов (или таблица) отображаются
-    await expect(historyPage.analysisCards.first()).toBeVisible({ timeout: 5000 });
-  });*/
 });
