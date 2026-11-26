@@ -11,11 +11,6 @@ export class ProfilePage {
   get emailText() {
     return this.page.getByText(/@/).first(); // Ищем текст с собачкой (email)
   }
-
-  get logoutButton() {
-    // Если кнопка в меню, сначала нужно открыть меню
-    return this.page.locator('[data-testid="header-account-menu"]');
-  }
   
   get logoutMenuItem() {
     return this.page.getByText(/Выйти/i);
@@ -25,17 +20,18 @@ export class ProfilePage {
     return this.page.getByText(/Перейти к истории/i);
   }
 
-  // Метод для авторизации через localStorage (мок)
-  async mockLogin() {
-    await this.page.goto('/');
-    await this.page.evaluate(() => {
-      localStorage.setItem('accessToken', 'fake-jwt-token-for-tests');
-      localStorage.setItem('refreshToken', 'fake-refresh-token');
-    });
+  async loginViaApi(username: string, password: string) {  
+    await this.page.goto('/login');
+    await this.page.fill('input[type="email"], input[name="email"]', username);
+    await this.page.fill('input[type="password"], input[name="password"]', password);
+    await this.page.click('button[type="submit"]');
+    // Ждём, пока сам фронтенд после успешного логина переведёт на /analysis/new
+    await this.page.waitForURL(/\/analysis\/new/, { timeout: 7000 });
   }
 
   async logout() {
-    await this.logoutButton.click();
-    await this.logoutMenuItem.click();
+    await this.page.locator('[data-testid="header-account-menu"]').click();
+    await this.page.locator('.account-menu button', { hasText: 'Выйти' }).click();
+    //await this.logoutMenuItem.click();
   }
 }

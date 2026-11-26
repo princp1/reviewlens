@@ -23,6 +23,14 @@ def unique_user():
     }
 
 @pytest.fixture
+def empty_user():
+    """Пустые поля для теста."""
+    return {
+        "username": "",
+        "password": ""
+    }
+
+@pytest.fixture
 def registered_user(api_client, base_url, unique_user):
     """Регистрирует пользователя."""
     api_client.post(f"{base_url}/auth/register", json=unique_user)
